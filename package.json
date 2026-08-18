@@ -1,7 +1,7 @@
 {
     "name":  "dsh-dashscope-tool-adapter",
-    "version":  "0.1.2",
-    "description":  "DSH plugin: adapts DashScope/闂冨潡鍣锋禍鎴犳閻?DeepSeek endpoints that lack native tool calling by converting tool definitions to prompt text and parsing model responses for tool calls.",
+    "version":  "0.1.3",
+    "description":  "DSH plugin: adapts DashScope/闂傚啫娼￠崳閿嬬閹寸姵顏ラ柣?DeepSeek endpoints that lack native tool calling by converting tool definitions to prompt text and parsing model responses for tool calls.",
     "type":  "module",
     "main":  "lib/index.mjs",
     "types":  "lib/index.d.mts",
