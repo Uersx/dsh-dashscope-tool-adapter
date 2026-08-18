@@ -63,28 +63,62 @@ export function apply(ctx: Context): void | (() => void) {
             if (!tools) return ''
             const schemas = tools.schemas() as ToolSchema[]
             if (!schemas || schemas.length === 0) return ''
-            const lines: string[] = [
-              '## Available Tools',
-              '',
-              'To call a tool, output a SINGLE LINE in this EXACT format:',
-              '',
-              '<|tool_call|>{"name": "<tool_name>", "arguments": {<json_args>}}</|tool_call|>',
-              '',
-              'The system will execute the tool and show the result.',
-              '',
-            ]
+
+            // 收集工具描述
+            const toolLines: string[] = []
             for (const s of schemas) {
               const name = s.name || 'unknown'
               const desc = s.description || '(no description)'
               const params = s.parameters?.properties
                 ? JSON.stringify(s.parameters.properties)
                 : '{}'
-              lines.push(`- **${name}**: ${desc}`)
-              lines.push(`  Parameters: \`${params}\``)
+              toolLines.push(`- **${name}**: ${desc}`)
+              toolLines.push(`  Parameters: \`${params}\``)
             }
-            return lines.join('\n')
+
+            // 取第一个工具作为示例
+            const firstTool = schemas[0]?.name || 'tool_name'
+            const exampleArg = schemas[0]?.parameters?.properties
+              ? JSON.stringify(Object.keys(schemas[0].parameters.properties).reduce((acc, k) => ({ ...acc, [k]: '...' }), {}))
+              : '{}'
+
+            return [
+              '## TOOLS — YOU MUST USE THIS FORMAT',
+              '',
+              'When you need to call a tool, output EXACTLY:',
+              '',
+              `<|tool_call|>{"name": "${firstTool}", "arguments": ${exampleArg}}</|tool_call|>`,
+              '',
+              'Example — to search the web:',
+              '<|tool_call|>{"name": "web_search", "arguments": {"query": "Beijing weather today"}}</|tool_call|>',
+              '',
+              'RULES:',
+              '1. Output the tool call on its OWN LINE, no extra text on that line.',
+              '2. Do NOT describe what you plan to do — just output the tool call.',
+              '3. After the tool executes, you will see the result and can continue.',
+              '',
+              'Available tools:',
+              ...toolLines,
+            ].join('\n')
           },
         })
+
+  // ------ agent/request: 注入 </|tool_call|> 作为 stop 序列 ------
+  ;(ctx as any).on('agent/request', (payload: any, next: () => Promise<any>) => {
+    return next().then((cfg: any) => {
+      // 从 agent 获取 provider，判断是否需要适配
+      const agent = payload?.agent
+      const provider: string = agent?.provider || cfg?.provider || ''
+      if (!isDashScope(provider)) return cfg
+
+      const STOP = '</|tool_call|>'
+      const stops: string[] = Array.isArray(cfg.stop) ? cfg.stop : []
+      if (!stops.includes(STOP)) {
+        return { ...cfg, stop: [...stops, STOP] }
+      }
+      return cfg
+    })
+  })
 
   // ------ llm/stream: 流式拦截百炼响应，解析文本工具调用 ------
   ;(ctx as any).on('llm/stream', (options: any, next: () => AsyncIterable<StreamChunk>) => {
@@ -110,7 +144,10 @@ export function apply(ctx: Context): void | (() => void) {
         if (chunk.type === 'block-start') {
           blockIndex = chunk.index as number
           blockStarted = true
-        } else if (chunk.type === 'text-delta' && typeof chunk.text === 'string') {
+        } else if (
+          (chunk.type === 'text-delta' || chunk.type === 'reasoning-delta') &&
+          typeof chunk.text === 'string'
+        ) {
           fullText += chunk.text
         } else if (chunk.type === 'usage') {
           hasUsage = true
