@@ -1,0 +1,47 @@
+{
+    "name":  "dsh-dashscope-tool-adapter",
+    "version":  "0.1.2",
+    "description":  "DSH plugin: adapts DashScope/闂冨潡鍣锋禍鎴犳閻?DeepSeek endpoints that lack native tool calling by converting tool definitions to prompt text and parsing model responses for tool calls.",
+    "type":  "module",
+    "main":  "lib/index.mjs",
+    "types":  "lib/index.d.mts",
+    "files":  [
+                  "lib/",
+                  "cordis.patch.yml"
+              ],
+    "scripts":  {
+                    "typecheck":  "tsc --noEmit",
+                    "build":  "tsdown",
+                    "prepare":  "tsdown"
+                },
+    "dsh":  {
+                "bundle":  {
+                               "patch":  "cordis.patch.yml"
+                           }
+            },
+    "keywords":  [
+                     "deepseek-harness",
+                     "dsh",
+                     "cordis",
+                     "dashscope",
+                     "aliyun",
+                     "bailian",
+                     "tool-calling",
+                     "plugin"
+                 ],
+    "license":  "MIT",
+    "peerDependencies":  {
+                             "@deepseek-ai/cordis":  "^4.0.1",
+                             "@deepseek-ai/dsh-skill":  "^0.1.0-rc.5",
+                             "@deepseek-ai/dsh-tools":  "^0.1.0-rc.6"
+                         },
+    "devDependencies":  {
+                            "@deepseek-ai/cordis":  "^4.0.1",
+                            "@deepseek-ai/dsh-llm":  "0.1.0-rc.6",
+                            "@deepseek-ai/dsh-skill":  "^0.1.0-rc.5",
+                            "@deepseek-ai/dsh-tools":  "^0.1.0-rc.6",
+                            "@types/node":  "^22.20.0",
+                            "tsdown":  "^0.22.2",
+                            "typescript":  "^6.0.3"
+                        }
+}
